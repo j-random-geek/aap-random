@@ -1,0 +1,35 @@
+---
+#
+# This playbook simply refreshes the token for the Red Hat Automation Hub
+# at https://console.redhat.com/ansible/automation-hub. It's a quick-and-dirty
+# hack and I'm sure there are a million others like it out there.
+#
+# The only thing you need to define is the variable rh_cloud_ah_token, which 
+# really ought to be vaulted.
+# 
+# Refresh URL is https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+#
+# POST data:
+# grant_type=refresh
+# client_id="cloud-services"
+# refresh_token="token goes here"
+
+- name: "Refresh Automation Hub API Token"
+  hosts: automationcontroller
+  gather_facts: false
+  tasks:
+    - name: "Refresh API Token"
+      delegate_to: localhost
+      ansible.builtin.uri:
+        body_format: "form-urlencoded"
+        body:
+          - [ grant_type, refresh_token ]
+          - [ client_id, cloud-services ]
+          - [ refresh_token, "{{ rh_cloud_ah_token }}" ]
+        force: true
+        method: "POST"
+        status_code:
+          - 200
+        url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+      no_log: true
+...
