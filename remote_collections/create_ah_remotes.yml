@@ -1,0 +1,65 @@
+---
+#
+# Playbook to create and sync remote repositories (collections)
+# in Private Automation Hub
+#
+# This playbook requires the infra.ah_configuration collection version 2.02 or later
+
+- name: "Create Collection Remotes and Repositories in PAH"
+  hosts: automationhub
+  gather_facts: false
+  become: false
+  tasks:
+    - name: "Set up remote collection repositories"
+      delegate_to: localhost
+      block:
+        - name: "Set up remote"
+          infra.ah_configuration.collection_remote:
+            ah_host: "{{ inventory_hostname }}"
+            ah_username: "{{ ah_admin_user }}"
+            ah_password: "{{ ah_admin_password }}"
+            url: "{{ item.url }}"
+            auth_url: "{{ item.sso_url | default(omit) }}"
+            name: "{{ item.name }}"
+            proxy_url: "{{ item.proxy_url | default(omit) }}"
+            proxy_username: "{{ item.proxy_username | default(omit) }}"
+            proxy_password: "{{ item.proxy_password | default(omit) }}"
+            requirements: "{{ item.requirements | default(omit) }}"
+            token: "{{ item.token | default(omit) }}"
+            state: "{{ item.state | default('present') }}"
+            request_timeout: 20
+            validate_certs: "{{ validate_certs }}"
+          with_items: "{{ ah_remotes }}"
+          no_log: true
+
+        - name: "Set up repository and sync"
+          infra.ah_configuration.collection_repository:
+            ah_host: "{{ inventory_hostname }}"
+            ah_username: "{{ ah_admin_user }}"
+            ah_password: "{{ ah_admin_password }}"
+            name: "{{ item.repository }}"
+            remote: "{{ item.name }}"
+            retain_repo_versions: 5
+            state: "{{ item.state | default('present') }}"
+            update_repo: true
+            validate_certs: "{{ validate_certs }}"
+          with_items: "{{ ah_remotes }}"
+          async: 7200
+          poll: 0
+          register: _repo_sync_async
+          changed_when: not _repo_sync_async.changed
+          no_log: true
+
+        - name: "Set up repository and sync | Wait for sync"
+          ansible.builtin.async_status:
+            jid: "{{ _repo_sync_async_results_item.ansible_job_id }}"
+          register: _repo_sync_async_result
+          until: _repo_sync_async_result.finished
+          retries: 120
+          delay: 30
+          loop: "{{ _repo_sync_async.results }}"
+          loop_control:
+            loop_var: _repo_sync_async_results_item
+          when: _repo_sync_async_results_item.ansible_job_id is defined
+          no_log: true
+...
