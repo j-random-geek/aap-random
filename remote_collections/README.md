@@ -14,7 +14,7 @@ You will need to provide a few things for this to work; most of these are probab
 | Variable | Type | Required | Default | Comment |
 |:---|:---:|:---:|:---:|:---:|
 | `ah_admin_user` | String | Y | - | The username of the Private Automation Hub admin user |
-| `ah_admin_password` | String| Y |The password for the above Private Automation Hub admin user |
+| `ah_admin_password` | String| Y | - | The password for the above Private Automation Hub admin user |
 | `validate_certs` | Boolean | N  | true | Whether or not to validate SSL certs |
 | `rh_cloud_ah_token` | String | Y | - | Your API Token from https://console.redhat.com/ansible/automation-hub/token |
 
