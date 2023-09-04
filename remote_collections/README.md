@@ -23,7 +23,7 @@ You will need to provide a few things for this to work; most of these are probab
 There are two playbooks here:
 
 ### `create_ah_remotes.yml`
-This playbook creates remotes and repositories for the Galaxy content defined in the variable `ah_remotes`, as shown in the demo `group_vars/automationhub/ah_config.yml`. Only the basic variables are illustrated; you may also need to add proxies, etc for your setup. Possibly of interest, and shown in the Community collection remote, is the use of the `requirements` keyword to define which collections to sync.
+This playbook creates remotes and repositories for the Galaxy content defined in the variable `ah_remotes`, as shown in the demo [`group_vars/automationhub/ah_config.yml`](group_vars/automationhub/ah_config.yml). Only the basic variables are illustrated; you may also need to add proxies, etc for your setup. Possibly of interest, and shown in the Community collection remote, is the use of the `requirements` keyword to define which collections to sync.
 
 ### `sync_ah_remotes.yml`
 This playbook triggers a sync of the remote objects (container registries defined in the variable `ah_remote_registries` and Galaxy repositories defind in `ah_remotes`) - again, as illustrated in `group_vars/automationhub/ah_config.yml`. I have personally used this playbook as a scheduled job in AAP 2.4 to update my collection repositories every week or so.
