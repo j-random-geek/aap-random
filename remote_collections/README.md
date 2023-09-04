@@ -2,6 +2,8 @@
 
 For illustrative purposes only, this directory contains a quick-and-dirty hack to configure remote Galaxy-style repositories in Private Automation Hub. This works with AAP 2.4 and depends on the `infra.ah_configuration` collection version 2.02 or later.
 
+There's quite a bit of `no_log: true` set in these playbooks. Without it, sensitive information (like your token for the Red Hat Automation Hub) can appear in your logs etc. Not great.
+
 ## Dependencies
 This works with Ansible Automation Platform 2.4 and depends on:
 - `infra.ah_configuration` collection, version 2.02 or later.
