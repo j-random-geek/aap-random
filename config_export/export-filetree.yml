@@ -1,6 +1,7 @@
 ---
 - name: Set timestamp fact for ouput_path
   hosts: localhost
+  gather_facts: false
   any_errors_fatal: true
   tasks:
     - name: Determine the timestamp for backup once for all nodes

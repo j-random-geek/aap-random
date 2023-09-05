@@ -1,6 +1,7 @@
 ---
 - name: Set timestamp for output file
   hosts: localhost
+  gather_facts: false
   any_errors_fatal: true
   tasks:
     - name: Set timestamp fact for the output file
