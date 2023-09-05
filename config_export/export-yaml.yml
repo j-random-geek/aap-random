@@ -1,0 +1,77 @@
+---
+- name: Set timestamp for output file
+  hosts: localhost
+  any_errors_fatal: true
+  tasks:
+    - name: Set timestamp fact for the output file
+      ansible.builtin.set_fact:
+        timestamp: '{{ lookup("pipe", "date +%Y%m%d-%H%M%S") }}'
+
+- name: Dump configuration from automationcontroller
+  hosts: automationcontroller
+  connection: local
+  gather_facts: false
+  become: false
+  vars:
+    controller_username: "{{ controller_admin_user }}"
+    controller_password: "{{ controller_admin_password }}"
+    controller_hostname: "{{ inventory_hostname }}"
+    ansible_python_interpreter: "/usr/bin/python3.9"
+    timestamp: "{{ hostvars['localhost']['timestamp'] }}"
+    output_path: "{{ config_dump_path | default('.') }}"
+  pre_tasks:
+    - name: Set up authentication
+      block:
+        - name: Get the controller oauth token
+          ansible.builtin.uri:
+            url: "https://{{ controller_hostname }}/api/v2/tokens/"
+            user: "{{ controller_username }}"
+            password: "{{ controller_password }}"
+            method: "POST"
+            force_basic_auth: true
+            validate_certs: "{{ validate_certs }}"
+            status_code: 201
+          register: authtoken_res
+
+        - name: Set the oauth token to use from now on
+          ansible.builtin.set_fact:
+            controller_oauthtoken: "{{ authtoken_res.json.token }}"
+            controller_oauthtoken_url: "{{ authtoken_res.json.url }}"
+      when: controller_oauthtoken is not defined
+
+  tasks:
+    - name: Export all assets
+      ansible.controller.export:
+        all: true
+        controller_host: "{{ controller_hostname }}"
+        controller_oauthtoken: "{{ hostvars[inventory_hostname]['controller_oauthtoken'] }}"
+        validate_certs: "{{ validate_certs }}"
+      register: _results
+
+    - name: Show results
+      ansible.builtin.debug:
+        var: _results
+      when:
+        ansible_verbosity==2
+
+    - name: Export assets to a file
+      ansible.builtin.copy:
+        content: "{{ _results | to_nice_yaml( width=80, explicit_start=true, explicit_end=true, indent=2 ) }}"
+        dest: "{{ output_path | default('.') }}/{{ timestamp }}-{{ controller_hostname }}-config.yml"
+
+    - name: Kind of useful output message
+      ansible.builtin.debug:
+        msg: "The AAP configuration has been saved to {{ output_path | default('.') }}/{{ timestamp }}-{{ controller_hostname }}-config.yml"
+
+  post_tasks:
+    - name: Delete the controller oauth token
+      ansible.builtin.uri:
+        url: "https://{{ controller_hostname }}{{ controller_oauthtoken_url }}"
+        user: "{{ controller_username }}"
+        password: "{{ controller_password }}"
+        method: "DELETE"
+        force_basic_auth: true
+        validate_certs: "{{ validate_certs }}"
+        status_code: 204
+      when: controller_oauthtoken_url is defined
+...

@@ -1,0 +1,12 @@
+---
+all:
+  vars:
+    controller_admin_user: "admin"
+    controller_admin_password: 'Put your vaulted admin password here'
+    validate_certs: true
+    output_path: "~/"
+  children:
+    automationcontroller:
+      hosts:
+        aap_controller.local.domain:
+...
