@@ -22,6 +22,7 @@
     output_path: "{{ config_dump_path | default('.') }}"
   pre_tasks:
     - name: Set up authentication
+      when: controller_oauthtoken is not defined
       block:
         - name: Get the controller oauth token
           ansible.builtin.uri:
@@ -38,7 +39,6 @@
           ansible.builtin.set_fact:
             controller_oauthtoken: "{{ authtoken_res.json.token }}"
             controller_oauthtoken_url: "{{ authtoken_res.json.url }}"
-      when: controller_oauthtoken is not defined
 
   tasks:
     - name: Export all assets
@@ -53,12 +53,13 @@
       ansible.builtin.debug:
         var: _results
       when:
-        ansible_verbosity==2
+        ansible_verbosity == 2
 
     - name: Export assets to a file
       ansible.builtin.copy:
-        content: "{{ _results | to_nice_yaml( width=80, explicit_start=true, explicit_end=true, indent=2 ) }}"
+        content: "{{ _results | to_nice_yaml(width=80, explicit_start=true, explicit_end=true, indent=2) }}"
         dest: "{{ output_path | default('.') }}/{{ timestamp }}-{{ controller_hostname }}-config.yml"
+        mode: "0644"
 
     - name: Kind of useful output message
       ansible.builtin.debug:

@@ -1,7 +1,7 @@
 ---
 #
 # Configuration variables for Private Automation Hub
-# 
+#
 ah_remote_registries:
   - "Nexus"
   - "Nexus Proxy"

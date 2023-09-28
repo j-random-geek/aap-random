@@ -5,10 +5,11 @@ This has been tested against AAP 2.4 (Controller 4.4.0) with version 4.4.0 of th
 
 ## Dependencies
 Collections:
-- ansible.controller
+- `ansible.controller`
+- `infra.controller_configuration`
 
 Python:
-- awxkit
+- `awxkit`
 
 
 ## Variables
