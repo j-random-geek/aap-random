@@ -43,8 +43,6 @@
 
   roles:
     - role: infra.controller_configuration.filetree_create
-      vars:
-        now: "{{ hostvars['localhost']['now'] }}"
 
   post_tasks:
     - name: Delete the controller oauth token
