@@ -1,3 +1,11 @@
-warn_list:
-  - yaml[comments]
-  - yaml[line-length]
+profile: production
+
+# warn_list:
+#   - yaml[line-length]
+
+exclude_paths:
+  - config_export/collections/ansible_collections
+  - remote_collections/collections/ansible_collections
+
+write_list:
+  - "none"

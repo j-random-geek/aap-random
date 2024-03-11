@@ -9,53 +9,102 @@
   hosts: automationhub
   gather_facts: false
   become: false
+  vars:
+    ah_creds: &ah_creds
+      ah_host: '{{ inventory_hostname }}{% if pah_port is defined %}:{{ pah_port }}{% endif %}'
+      ah_username: "{{ ah_admin_user }}"
+      ah_password: "{{ ah_admin_password }}"
+      validate_certs: "{{ validate_certs }}"
   tasks:
-    - name: "Sync remote registries (EE images)"
-      delegate_to: localhost
-      infra.ah_configuration.ah_ee_registry_sync:
-        ah_host: "{{ inventory_hostname }}"
-        ah_username: "{{ ah_admin_user }}"
-        ah_password: "{{ ah_admin_password }}"
-        interval: 10
-        name: "{{ item }}"
-        request_timeout: 20
-        timeout: 1800
-        validate_certs: "{{ validate_certs }}"
-        wait: true
-      with_items: "{{ ah_remote_registries }}"
-
-    - name: "Sync repositories (Collections)"
-      delegate_to: localhost
-      infra.ah_configuration.collection_repository_sync:
-        ah_host: "{{ inventory_hostname }}"
-        ah_username: "{{ ah_admin_user }}"
-        ah_password: "{{ ah_admin_password }}"
-        interval: 20
-        name: "{{ item.repository }}"
-        request_timeout: 20
-        timeout: 1800
-        validate_certs: "{{ validate_certs }}"
-        wait: true
+    - name: "Sync remote registries (EE images) and repositories (Collections) in PAH"
       when:
-        - ( not item.state is defined ) or ( not item.state == "absent" )
-      with_items: "{{ ah_remotes }}"
-      async: 7200
-      poll: 0
-      register: _repo_sync_async
-      changed_when: not _repo_sync_async.changed
-      no_log: true
-
-    - name: "Sync Repositories | Wait for sync"
+        - inventory_hostname == groups['automationhub'][0]  # Only do this on the first PAH
       delegate_to: localhost
-      ansible.builtin.async_status:
-        jid: "{{ _repo_sync_async_results_item.ansible_job_id }}"
-      register: _repo_sync_async_result
-      until: _repo_sync_async_result.finished
-      retries: 120
-      delay: 30
-      loop: "{{ _repo_sync_async.results }}"
-      loop_control:
-        loop_var: _repo_sync_async_results_item
-      when: _repo_sync_async_results_item.ansible_job_id is defined
-      no_log: true
+      block:
+        - name: "Get remote registry names"
+          # We do this to prevent sensitive data being fed into plays from the group_vars data
+          ansible.builtin.set_fact:
+            ah_remote_registry_names: "{{ ah_remote_registries | map(attribute='name') }}"
+
+        - name: "DEBUG | Show value of ah_remote_registry_names"
+          ansible.builtin.debug:
+            var: ah_remote_registry_names
+          when:
+            - ansible_verbosity >= 1
+
+        - name: "Get remote EE image names"
+          # We do this to prevent sensitive data being fed into plays from the group_vars data
+          ansible.builtin.set_fact:
+            ah_remote_ee_images: "{{ ah_remote_images_all | map(attribute='name') }}"
+
+        - name: "DEBUG | Show remote EE image names"
+          ansible.builtin.debug:
+            var: ah_remote_ee_images
+          when:
+            - ansible_verbosity >= 1
+
+        - name: "Get collection repository names"
+          # This looks complex, but we are simply looking for remotes where the
+          # state is not defined or where the state is defined and is "present".
+          # We are treating the default as "present", so basically we are just
+          # weeding out anything that's not supposed to be present. This allows
+          # people to set remotes etc as "absent" in the group_vars and they'll
+          # be ignored here.
+          ansible.builtin.set_fact:
+            ah_remote_repository_names: "{{ ah_remotes | rejectattr('state', 'defined') | list | union(ah_remotes | selectattr('state', 'defined') | selectattr('state', 'equalto', 'present') | list) | map(attribute='repository') }}" # noqa: yaml[line-length]
+
+        - name: "DEBUG | Show value of ah_remote_repository_names"
+          ansible.builtin.debug:
+            var: ah_remote_repository_names
+          when:
+            - ansible_verbosity >= 1
+
+        - name: "Sync remote container registries"
+          infra.ah_configuration.ah_ee_registry_sync:
+            <<: *ah_creds
+            interval: 10
+            name: "{{ item }}"
+            request_timeout: 20
+            timeout: 1800
+            wait: true
+          loop: "{{ ah_remote_registry_names }}"
+
+        - name: "Sync remote EE images"
+          #
+          # I think this may be redundant; the registry sync also seems to sync
+          # the individual images.
+          infra.ah_configuration.ah_ee_repository_sync:
+            <<: *ah_creds
+            name: "{{ item }}"
+            interval: 20
+            request_timeout: 20
+            timeout: 1800
+            wait: true
+          loop: "{{ ah_remote_ee_images }}"
+
+        - name: "Sync repositories (Collections)"
+          infra.ah_configuration.collection_repository_sync:
+            <<: *ah_creds
+            interval: 20
+            name: "{{ item }}"
+            request_timeout: 20
+            timeout: 1800
+            wait: true
+          loop: "{{ ah_remote_repository_names }}"
+          async: 7200
+          poll: 0
+          register: _repo_sync_async
+          changed_when: not _repo_sync_async.changed
+
+        - name: "Sync Repositories | Wait for sync"
+          ansible.builtin.async_status:
+            jid: "{{ _repo_sync_async_results_item.ansible_job_id }}"
+          register: _repo_sync_async_result
+          until: _repo_sync_async_result.finished
+          retries: 120
+          delay: 30
+          loop: "{{ _repo_sync_async.results }}"
+          loop_control:
+            loop_var: _repo_sync_async_results_item
+          when: _repo_sync_async_results_item.ansible_job_id is defined
 ...

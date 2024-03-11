@@ -1,54 +1,106 @@
 ---
 #
-# Playbook to create and sync remote repositories (collections)
+# Playbook to create and sync remote registries (ee_images) and repositories (collections)
 # in Private Automation Hub
 #
 # This playbook requires the infra.ah_configuration collection version 2.02 or later
 
-- name: "Create Collection Remotes and Repositories in PAH"
+- name: "Create Remote EE registries and collection Remotes and Repositories in PAH"
   hosts: automationhub
   gather_facts: false
   become: false
+  vars:
+    ah_data: &pah_data
+      ah_host: "{{ inventory_hostname }}{% if pah_port is defined %}:{{ pah_port }}{% endif %}"
+      ah_username: "{{ ah_admin_user }}"
+      ah_password: "{{ ah_admin_password }}"
+      validate_certs: "{{ validate_certs }}"
   tasks:
-    - name: "Set up remote collection repositories"
+    - name: "Set up remote collections and registries"
+      when:
+        - inventory_hostname == groups['automationhub'][0]  # Only do this on one PAH node
       delegate_to: localhost
       block:
-        - name: "Set up remote"
+        - name: "Configure remote container registries"
+          infra.ah_configuration.ah_ee_registry:
+            <<: *pah_data
+            name: "{{ item.name }}"
+            password: "{{ item.password }}"
+            username: "{{ item.username }}"
+            url: "{{ item.url }}"
+            state: "{{ item.state | default('present') }}"
+          with_items: "{{ ah_remote_registries }}"
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - ee_images
+
+        - name: "Sync container registries"
+          infra.ah_configuration.ah_ee_registry_sync:
+            <<: *pah_data
+            wait: true
+            timeout: 300
+            name: "{{ item.name }}"
+          with_items: "{{ ah_remote_registries }}"
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - ee_images
+
+        - name: "Configure remote-sourced EE Images"
+          infra.ah_configuration.ah_ee_repository:
+            <<: *pah_data
+            name: "{{ item.name }}"
+            description: "{{ item.description }}"
+            registry: "{{ item.upstream_registry }}"
+            upstream_name: "{{ item.upstream_name }}"
+            include_tags: "{{ item.include_tags }}"
+            exclude_tags: "{{ item.exclude_tags }}"
+            state: "{{ item.state | default('present') }}"
+          with_items: "{{ ah_remote_images }}"
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - ee_images
+
+        - name: "Sync remote-sourced EE images"
+          infra.ah_configuration.ah_ee_repository_sync:
+            <<: *pah_data
+            name: "{{ item.name }}"
+            timeout: 300
+          with_items: "{{ ah_remote_images }}"
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - ee_images
+
+        - name: "Set up collection remotes"
           infra.ah_configuration.collection_remote:
-            ah_host: "{{ inventory_hostname }}"
-            ah_username: "{{ ah_admin_user }}"
-            ah_password: "{{ ah_admin_password }}"
+            <<: *pah_data
             url: "{{ item.url }}"
             auth_url: "{{ item.sso_url | default(omit) }}"
             name: "{{ item.name }}"
-            proxy_url: "{{ item.proxy_url | default(omit) }}"
-            proxy_username: "{{ item.proxy_username | default(omit) }}"
-            proxy_password: "{{ item.proxy_password | default(omit) }}"
             requirements: "{{ item.requirements | default(omit) }}"
             token: "{{ item.token | default(omit) }}"
             state: "{{ item.state | default('present') }}"
             request_timeout: 20
-            validate_certs: "{{ validate_certs }}"
           with_items: "{{ ah_remotes }}"
-          no_log: true
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - collections
 
-        - name: "Set up repository and sync"
+        - name: "Set up collection repository and sync"
           infra.ah_configuration.collection_repository:
-            ah_host: "{{ inventory_hostname }}"
-            ah_username: "{{ ah_admin_user }}"
-            ah_password: "{{ ah_admin_password }}"
+            <<: *pah_data
             name: "{{ item.repository }}"
             remote: "{{ item.name }}"
             retain_repo_versions: 5
             state: "{{ item.state | default('present') }}"
             update_repo: true
-            validate_certs: "{{ validate_certs }}"
           with_items: "{{ ah_remotes }}"
           async: 7200
           poll: 0
           register: _repo_sync_async
           changed_when: not _repo_sync_async.changed
-          no_log: true
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - collections
 
         - name: "Set up repository and sync | Wait for sync"
           ansible.builtin.async_status:
@@ -61,5 +113,7 @@
           loop_control:
             loop_var: _repo_sync_async_results_item
           when: _repo_sync_async_results_item.ansible_job_id is defined
-          no_log: true
+          no_log: "{{ create_ah_remotes_secure_logging | default(true) }}"
+          tags:
+            - collections
 ...

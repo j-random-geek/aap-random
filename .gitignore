@@ -1,0 +1,5 @@
+ansible.cfg
+ansible-navigator.log
+*artifact*.json
+remote_collections/collections/ansible_collections
+config_export/collections/ansible_collections

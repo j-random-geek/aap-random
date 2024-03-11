@@ -2,37 +2,78 @@
 #
 # Configuration variables for Private Automation Hub
 #
-ah_remote_registries:
-  - "Nexus"
-  - "Nexus Proxy"
+ah_remote_registries: []
+ah_remote_images: []
+ah_remotes: []
 
-ah_remotes:
-  - name: "rh-validated"
-    url: "https://console.redhat.com/api/automation-hub/content/validated/"
-    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
-    token: "{{ rh_cloud_ah_token }}"
-    requirements: []
-    repository: "validated"
-  - name: "rh-certified"
-    url: "https://console.redhat.com/api/automation-hub/content/published/"
-    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
-    token: "{{ rh_cloud_ah_token }}"
-    requirements: []
-    repository: "rh-certified"
-  - name: "community"
-    url: "https://galaxy.ansible.com/api/"
-    requirements:
-      - name: community.general
-        version: ">=6.0.0"
-      - name: community.crypto
-        version: ">=2.0.0"
-      - name: community.postgresql
-        version: ">=2.0.0"
-      - name: community.windows
-        version: ">=1.5.0"
-      - name: containers.podman
-        version: ">=1.8.0"
-      - name: community.vmware
-        version: ">=2.1.4"
-    repository: "community"
-...
+#
+# Examples:
+#
+#ah_remote_registries:  # noqa: yaml[comments]
+#  - name: "Nexus"
+#    url: "https://nexus.localdomain:8445"
+#    username: "nexus-user"
+#    password: "{{ registry_password }}"
+#  - name: "Red Hat Registry"
+#    url: "https://registry.redhat.io"
+#    username: "{{ rh_cloud_registry_username }}"
+#    password: "{{ rh_cloud_registry_password }}"
+#
+#ah_remote_images:
+#  - name: "nexus_test_ee"
+#    upstream_name: "repository/local/test_ee"
+#    upstream_registry: "Nexus"
+#    include_tags: []
+#    exclude_tags:
+#      - "*-source"
+#      - "latest"
+#    description: "test_ee from local Nexus registry"
+#  - name: "redhat/ee_minimal_rhel8"
+#    upstream_name: "ansible-automation-platform/ee-minimal-rhel8"
+#    upstream_registry: "Red Hat Registry"
+#    include_tags:
+#      - "2.12"
+#      - "2.14"
+#      - "2.15"
+#    exclude_tags:
+#      - "*-source"
+#      - "latest"
+#    description: "registry.redhat.io/ansible-automation-platform/ee-minimal-rhel8"
+#
+#ah_remotes:
+#  - name: "rh-validated"
+#    url: "https://console.redhat.com/api/automation-hub/content/validated/"
+#    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+#    token: "{{ rh_cloud_ah_token }}"
+#    requirements: []
+#    repository: "rh-validated"
+#  - name: "old-validated"
+#    url: "https://console.redhat.com/api/automation-hub/content/validated/"
+#    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+#    token: "{{ rh_cloud_ah_token }}"
+#    requirements: []
+#    repository: "old-validated"
+#    state: absent  # This is an example of one that is to be or has been removed from PAH
+#  - name: "rh-certified"
+#    url: "https://console.redhat.com/api/automation-hub/content/published/"
+#    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+#    token: "{{ rh_cloud_ah_token }}"
+#    requirements: []
+#    repository: "rh-certified"
+#  - name: "community"
+#    url: "https://galaxy.ansible.com/api/"
+#    requirements:
+#      - name: community.general
+#        version: ">=8.0.0"
+#      - name: community.crypto
+#        version: ">=2.8.0"
+#      - name: community.postgresql
+#        version: ">=3.0.0"
+#      - name: community.windows
+#        version: ">=2.0.0"
+#      - name: containers.podman
+#        version: ">=1.10.0"
+#      - name: community.vmware
+#        version: ">=4.0.0"
+#    repository: "community"
+#...
