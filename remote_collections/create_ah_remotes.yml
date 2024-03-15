@@ -90,7 +90,7 @@
             <<: *pah_data
             name: "{{ item.repository }}"
             remote: "{{ item.name }}"
-            retain_repo_versions: 5
+            retain_repo_versions: "{{ item.versions | default(1) }}"
             state: "{{ item.state | default('present') }}"
             update_repo: true
           with_items: "{{ ah_remotes }}"

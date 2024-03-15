@@ -45,6 +45,7 @@ ah_remotes: []
 #    url: "https://console.redhat.com/api/automation-hub/content/validated/"
 #    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 #    token: "{{ rh_cloud_ah_token }}"
+#    versions: 2
 #    requirements: []
 #    repository: "rh-validated"
 #  - name: "old-validated"
@@ -54,10 +55,12 @@ ah_remotes: []
 #    requirements: []
 #    repository: "old-validated"
 #    state: absent  # This is an example of one that is to be or has been removed from PAH
+#    # NOTE that certain repository names are protected and cannot be removed (even if you had to create them yourself).
 #  - name: "rh-certified"
 #    url: "https://console.redhat.com/api/automation-hub/content/published/"
 #    sso_url: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 #    token: "{{ rh_cloud_ah_token }}"
+#    versions: 2
 #    requirements: []
 #    repository: "rh-certified"
 #  - name: "community"
@@ -76,4 +79,4 @@ ah_remotes: []
 #      - name: community.vmware
 #        version: ">=4.0.0"
 #    repository: "community"
-#...
+...
