@@ -7,3 +7,8 @@
     - name: Set a random fact
       ansible.builtin.set_fact:
         my_random_fact: This is a test
+
+    - name: Set stats
+      ansible.builtin.set_stats:
+        data:
+          my_random_stats: Testing stats
