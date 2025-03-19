@@ -1,0 +1,9 @@
+---
+- name: Experiment with set_stats and approvals
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Set a random fact
+      ansible.builtin.set_fact:
+        my_random_fact: This is a test
