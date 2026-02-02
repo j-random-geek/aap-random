@@ -6,7 +6,7 @@
   tasks:
     - name: Determine the timestamp for backup once for all nodes
       ansible.builtin.set_fact:
-        now: '{{ lookup("pipe", "date +%Y%m%d-%H%M%S") }}'
+        my_timestamp: '{{ lookup("pipe", "date +%Y%m%d-%H%M%S") }}'
 
 - name: Create configuration filetree from AAP
   hosts: automationcontroller
@@ -15,7 +15,7 @@
   connection: local
   vars:
     flatten_output: "{{ export_filetree_flatten | default(true) | bool }}"
-    output_filetree: "{{ hostvars['localhost']['now'] }}-{{ controller_hostname }}-config{% if flatten_output %}-flattened{% endif %}"
+    output_filetree: "{{ hostvars['localhost']['my_timestamp'] }}-{{ controller_hostname }}-config{% if flatten_output %}-flattened{% endif %}"
   tasks:
     - name: Create a filetree from the first Automation Controller only
       when:

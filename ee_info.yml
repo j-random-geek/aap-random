@@ -1,0 +1,21 @@
+---
+- name: Get info from an EE
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Show the EE we are using
+      ansible.builtin.debug:
+        msg: "We are using ee {{ specified_ee }}" ## specified_ee should be passed in an as extravar
+
+    - name: Get EE Ansible information
+      ansible.builtin.command:
+        cmd: ansible --version
+      register: __ansible_version
+      changed_when: false
+
+    - name: Print the EE information
+      ansible.builtin.debug:
+        var: __ansible_version
+
+...
