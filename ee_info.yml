@@ -6,7 +6,7 @@
   tasks:
     - name: Show the EE we are using
       ansible.builtin.debug:
-        msg: "We are using ee {{ specified_ee }}" ## specified_ee should be passed in an as extravar
+        msg: "We are using ee '{{ specified_ee }}'" ## specified_ee should be passed in an as extravar
 
     - name: Get EE Ansible information
       ansible.builtin.command:
