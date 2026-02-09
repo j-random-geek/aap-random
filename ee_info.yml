@@ -5,16 +5,15 @@
   become: false
   tasks:
     - name: Show the EE we are using
-      ansible.builtin.debug:
+      debug:
         msg: "We are using ee '{{ specified_ee }}'" ## specified_ee should be passed in an as extravar
 
     - name: Get EE Ansible information
-      ansible.builtin.command: ansible --version
+      command: ansible --version
       register: __ansible_version
-      changed_when: false
 
     - name: Print the EE information
-      ansible.builtin.debug:
+      debug:
         var: __ansible_version
 
 ...
