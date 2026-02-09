@@ -9,8 +9,7 @@
         msg: "We are using ee '{{ specified_ee }}'" ## specified_ee should be passed in an as extravar
 
     - name: Get EE Ansible information
-      ansible.builtin.command:
-        cmd: ansible --version
+      ansible.builtin.command: ansible --version
       register: __ansible_version
       changed_when: false
 
